@@ -17,7 +17,10 @@ MAINTAINER Javier Jerónimo <jjeronimo@packagepeer.com>
 #             -d packagepeer/nginx
 
 # ################################################################################ Setup
-COPY etc/nginx/sites-enabled/ssl /etc/nginx/sites-enabled/ssl
+ADD etc/nginx/sites-enabled/ssl /etc/nginx/sites-enabled/ssl
+
+ADD pkgp-run.sh /pkgp-run.sh
+RUN chmod u+x /pkgp-run.sh
 
 
 # ################################################################################ Entry point
