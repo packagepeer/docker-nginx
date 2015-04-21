@@ -1,0 +1,76 @@
+server {
+    ### server port and name ###
+    listen          443;
+    ssl        on;
+    server_name     %%%SERVER_NAME%%%;
+
+    # TM_User-Id ... !!!!!!!
+    underscores_in_headers     on;
+
+    ### SSL log files ###
+    access_log      logs/access.log;
+    error_log       logs/error.log;
+
+    ### SSL cert files ###
+    ssl_certificate      /etc/pki/tls/certs/nginx.combined.crt;
+    ssl_certificate_key  /etc/pki/tls/private/nginx.key;
+
+    ### Add SSL specific settings here ###
+
+
+    ssl_protocols        TLSv1 TLSv1.1 TLSv1.2;
+    ssl_ciphers RC4:HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+    keepalive_timeout    60;
+    ssl_session_cache    shared:SSL:10m;
+    ssl_session_timeout  10m;
+
+    location /artifactory {
+        proxy_pass  http://${ARTIFACTORY_PORT_8080_TCP_ADDR}:8080/artifactory;
+
+        ### force timeouts if one of backend is died ##
+        proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
+
+        ### Set headers ####
+        proxy_set_header        Accept-Encoding   "";
+        proxy_set_header        Host            $host;
+        proxy_set_header        X-Real-IP       $remote_addr;
+        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        ### Most PHP, Python, Rails, Java App can use this header ###
+        #proxy_set_header X-Forwarded-Proto https;##
+        #This is better##
+        proxy_set_header        X-Forwarded-Proto $scheme;
+        add_header              Front-End-Https   on;
+
+
+        ### By default we don't want to redirect it ####
+        proxy_redirect     off;
+    }
+
+    location /consul {
+        proxy_pass  http://${CONSUL_PORT_8500_TCP_ADDR}:8500/;
+
+        ### force timeouts if one of backend is died ##
+        proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
+
+        ### Set headers ####
+        proxy_set_header        Accept-Encoding   "";
+        proxy_set_header        Host            $host;
+        proxy_set_header        X-Real-IP       $remote_addr;
+        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        ### Most PHP, Python, Rails, Java App can use this header ###
+        #proxy_set_header X-Forwarded-Proto https;##
+        #This is better##
+        proxy_set_header        X-Forwarded-Proto $scheme;
+        add_header              Front-End-Https   on;
+
+
+        ### By default we don't want to redirect it ####
+        proxy_redirect     off;
+
+        auth_basic consul;
+        auth_basic_user_file /etc/nginx/passwd
+    }
+}
