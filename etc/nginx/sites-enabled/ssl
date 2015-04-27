@@ -23,6 +23,7 @@ server {
 
     location /artifactory {
         proxy_pass  http://artifactory:8080/artifactory;
+        proxy_redirect default;
 
         ### force timeouts if one of backend is died ##
         proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
@@ -46,7 +47,8 @@ server {
 
     location /consul {
         rewrite ^/consul/(.*) /$1 break;
-        proxy_pass  http://127.0.0.1:8500/;
+        proxy_pass  http://consul:8500/;
+        proxy_redirect default;
 
         ### force timeouts if one of backend is died ##
         proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
@@ -74,6 +76,7 @@ server {
     location /shipyard {
         rewrite ^/shipyard/(.*) /$1 break;
         proxy_pass  http://shipyard:8080/;
+        proxy_redirect default;
 
         ### force timeouts if one of backend is died ##
         proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
