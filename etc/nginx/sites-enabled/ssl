@@ -2,18 +2,14 @@ server {
     ### server port and name ###
     listen          443;
     ssl        on;
-    server_name     %%%SERVER_NAME%%%;
-
-    # TM_User-Id ... !!!!!!!
-    underscores_in_headers     on;
 
     ### SSL log files ###
     access_log      logs/access.log;
     error_log       logs/error.log;
 
     ### SSL cert files ###
-    ssl_certificate      /etc/pki/tls/certs/nginx.combined.crt;
-    ssl_certificate_key  /etc/pki/tls/private/nginx.key;
+    ssl_certificate      /etc/nginx/nginx.combined.crt;
+    ssl_certificate_key  /etc/nginx/nginx.key;
 
     ### Add SSL specific settings here ###
 
@@ -26,7 +22,7 @@ server {
     ssl_session_timeout  10m;
 
     location /artifactory {
-        proxy_pass  http://${ARTIFACTORY_PORT_8080_TCP_ADDR}:8080/artifactory;
+        proxy_pass  http://artifactory:8080/artifactory;
 
         ### force timeouts if one of backend is died ##
         proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
@@ -49,7 +45,8 @@ server {
     }
 
     location /consul {
-        proxy_pass  http://${CONSUL_PORT_8500_TCP_ADDR}:8500/;
+        rewrite ^/consul/(.*) /$1 break;
+        proxy_pass  http://127.0.0.1:8500/;
 
         ### force timeouts if one of backend is died ##
         proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
@@ -70,7 +67,34 @@ server {
         ### By default we don't want to redirect it ####
         proxy_redirect     off;
 
-        auth_basic consul;
-        auth_basic_user_file /etc/nginx/passwd
+        auth_basic intranet;
+        auth_basic_user_file /etc/nginx/passwd;
+    }
+
+    location /shipyard {
+        rewrite ^/shipyard/(.*) /$1 break;
+        proxy_pass  http://shipyard:8080/;
+
+        ### force timeouts if one of backend is died ##
+        proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
+
+        ### Set headers ####
+        proxy_set_header        Accept-Encoding   "";
+        proxy_set_header        Host            $host;
+        proxy_set_header        X-Real-IP       $remote_addr;
+        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        ### Most PHP, Python, Rails, Java App can use this header ###
+        #proxy_set_header X-Forwarded-Proto https;##
+        #This is better##
+        proxy_set_header        X-Forwarded-Proto $scheme;
+        add_header              Front-End-Https   on;
+
+
+        ### By default we don't want to redirect it ####
+        proxy_redirect     off;
+
+        auth_basic intranet;
+        auth_basic_user_file /etc/nginx/passwd;
     }
 }
