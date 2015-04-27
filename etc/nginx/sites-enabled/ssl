@@ -4,8 +4,8 @@ server {
     ssl        on;
 
     ### SSL log files ###
-    access_log      logs/access.log;
-    error_log       logs/error.log;
+    access_log      /var/log/nginx/access.log;
+    error_log       /var/log/nginx/error.log;
 
     ### SSL cert files ###
     ssl_certificate      /etc/nginx/nginx.combined.crt;
